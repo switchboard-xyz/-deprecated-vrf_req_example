@@ -1,0 +1,18 @@
+version: "3.3"
+services:
+  switchboard:
+    image: "switchboardlabs/node:staging"
+    network_mode: host
+    restart: always
+    secrets:
+      - PAYER_SECRETS
+    environment:
+      - LIVE=1
+      - CLUSTER=devnet
+      - HEARTBEAT_INTERVAL=15 # Seconds
+      - FULFILLMENT_MANAGER_KEY=${FULFILLMENT_MANAGER_KEY}
+      - FULFILLMENT_MANAGER_HEARTBEAT_AUTH_KEY=${AUTH_KEY}
+secrets:
+  PAYER_SECRETS:
+    file: example-keypair.json
+
