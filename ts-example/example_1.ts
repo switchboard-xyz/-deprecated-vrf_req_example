@@ -67,7 +67,6 @@ async function sleep(ms: number): Promise<void> {
 
 async function getVrfState(connection: Connection, vrfPubKey: PublicKey): Promise<VrfAccountData> {
   let accountInfo = await connection.getAccountInfo(vrfPubKey);
-  console.log(accountInfo.data[0]);
   let state = VrfAccountData.decodeDelimited(accountInfo.data.slice(1));
   console.log(
     "(",
@@ -158,30 +157,24 @@ async function awaitRandomness(connection: Connection, vrfAccount: Account) {
   let attempts = 30;
   while (attempts--) {
     let state: VrfAccountData = await getVrfState(connection, vrfAccount.publicKey);
-    if (state.value.length !== 0) {
-      // console.log(`(${dataFeedPubkey.toBase58()}) state.\n`,
-      // JSON.stringify(state.toJSON(), null, 2));
+    if (state.numProofConfirmations >= state.minProofConfirmations) {
       break;
     }
-    // It may take a few more seconds for the oracle response to be processed.
     await sleep(1_000);
   }
 }
 
 async function main() {
-  // let tAccount = new Account(bs58.decode(""));
-  // console.log(tAccount.publicKey.toBase58());
-  // console.log(JSON.stringify(tAccount.secretKey));
   let cluster = 'devnet';
   let url = clusterApiUrl(toCluster(cluster), true);
-  let connection = new Connection(url, 'processed');
+  let connection = new Connection(url, 'confirmed');
   let payerKeypair = JSON.parse(fs.readFileSync(resolve(argv.payerFile), 'utf-8'));
   let fmKeypair = JSON.parse(fs.readFileSync(resolve(argv.fmFile), 'utf-8'));
   let fmAccount = new Account(fmKeypair);
   let vrfProducerKeypair = JSON.parse(fs.readFileSync(resolve(argv.vrfProducerFile), 'utf-8'));
   let vrfProducerAccount = new Account(vrfProducerKeypair);
   let payerAccount = new Account(payerKeypair);
-  let vrfAccount = await createOwnedStateAccount(connection, payerAccount, 500, SWITCHBOARD_DEVNET_PID);
+  let vrfAccount = await createOwnedStateAccount(connection, payerAccount, 500, PID);
   await initAccount(connection, payerAccount, vrfAccount, SwitchboardAccountType.TYPE_VRF);
   await setVrfConfigs(connection, vrfAccount, vrfProducerAccount, fmAccount, payerAccount);
   await getVrfState(connection, vrfAccount.publicKey);
