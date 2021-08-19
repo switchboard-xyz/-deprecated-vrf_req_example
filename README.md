@@ -1,4 +1,4 @@
-Starter repo for all things Switchboard.
+Repo to demo verifiable randomness generation on Solana.
 
 # Prerequisites
 1. Install node 12: https://nodejs.org/en/download/package-manager/
@@ -7,62 +7,46 @@ Starter repo for all things Switchboard.
 1. cargo: https://doc.rust-lang.org/cargo/getting-started/installation.html
 1. solana cli https://docs.solana.com/cli/install-solana-cli-tools
 
-# Example 1: Calling a Data Feed
+# Security
+Randomness generation is produced by a `randomness producer` who holds the secret
+key used for randomness generation. If the secret key used by the randomness
+producer to generate the vrf was leaked, then, given a message, it will be possible
+to predict the randomness value output.
 
-In this example, we will post an example Solana program that will parse and
-print a provided data feed.
+In this vrf implementation, all randomness generation is formatted into strict messages
+unique to a VRF account owner.  VRF messages are a combination of:
 
-```shell
-cd "$(git rev-parse --show-toplevel)/example-program"
-# Build example program
-cargo build-bpf --manifest-path=Cargo.toml --bpf-out-dir=$PWD
-# Publish example program (NOTE: you may need to replace switchboard_example.so with libswitchboard_example.so)
-PROGRAM_PUBKEY=$(solana program deploy switchboard_example.so | tee /dev/tty | grep "Program Id:" | awk '{print $NF}')
-cd ../ts-example
-# Create and fund a payer account for the example
-solana-keygen new --outfile example-keypair.json
-solana airdrop 5 example-keypair.json
-# Choose a feed to use in your program
-# Find Data Feed Pubkeys at https://switchboard.xyz/#/explorer
-FEED_PUBKEY="<YOUR FEED PUBKEY HERE>"
-# Install dependencies and run the example
-npm i
-ts-node example_1.ts --payerFile=example-keypair.json --programPubkey=${PROGRAM_PUBKEY?} --dataFeedPubkey=${FEED_PUBKEY?}
-# EXTRA: If you want to keep the compute units low when getting the result of the aggregator, use the PARSE_OPTIMIZED mirror account instead
-OPTIMIZED_RESULT_PUBKEY="<YOUR PUBKEY HERE>"
-ts-node example_1.ts --payerFile=example-keypair.json --programPubkey=${PROGRAM_PUBKEY?} --dataFeedPubkey=${OPTIMIZED_RESULT_PUBKEY?}
-```
+1. The VRF Account public key used in requesting randomness
+1. A counter variable, incremented every randomness request
+1. The last blockhash
 
-# Example 2: Creating your own Data Feed
+## Consideration 1
+If the current solana network leader were to acquire to VRF producer secret key,
+they could opt to control transaction ordering to produce a blockhash
+that would create more favorable randomness for themselves.
 
-In this example, we will create our own data feed and spin up our own node to
-fulfill aggregator jobs.
+## Consideration 2
+If the most recent blockhash were not included in randomness generation and
+the randomness producer secret key leaked publicly, any party could easily
+predict randomness generation well before requested.
 
-In part `a` of this example, we will:
-1. Create a data feed.
-1. Add an example job to the feed.
-1. Create a fulfillment manager and link it to the data feed.
-1. Run a Switchboard node on the new fulfillment manager.
+## Design Decision
+Given the above 2 considerations and given Solanas block generation speed, attack
+scope is more narrowed to include the most recent blockhash to minimize randomness
+foresight on producer secret key leaks.
 
-In part `b` we will:
-1. Call `update` on a Switchboard Feed.
-1. Watch as the aggregator populates with results!
 
-Part a (Run a Switchboard node on your Fulfillment Manager):
-```shell
-cd "$(git rev-parse --show-toplevel)/ts-example"
-solana airdrop 5 example-keypair.json
-ts-node example_2a.ts --payerFile=example-keypair.json
-export FULFILLMENT_MANAGER_KEY=<FULFILLMENT MANAGER KEY HERE>
-export AUTH_KEY=<AUTH KEY HERE>
-docker-compose up
-```
+# Usage
+The included example shows how to create a VRF account and link it to a provided
+randomness producer and fulfillment group (which will act to verify VRF proofs)
+`ts-node example.ts --payerFile=example-keypair.json --vrfProducerFile=vrf_producer_secret.json --fmFile=fm_secret.json`
 
-Part b:
-```shell
-FEED_PUBKEY=<FEED PUBKEY HERE>
-UPDATE_AUTH_KEY=<UPDATE AUTH PUBKEY HERE>
-ts-node example_2b.ts --payerFile=example-keypair.json \
-  --dataFeedPubkey=${FEED_PUBKEY?} --updateAuthPubkey=${UPDATE_AUTH_KEY?}
-```
-# vrf_req_example
+# Additional Considerations and Improvements
+Currently, a group of oracles come to consensus on whether a randomness generation
+successfully verifies with the published proof.  This is due to the limitation
+that trusted elliptic curve libraries are not formally compatible with Solana's
+toolchain.  We are in the process of moving proof verification on chain rather
+than differing to oracles to verify proofs.
+
+This also brings the additional security consideration that randomness proofs
+may be falsely verified on malicious oracle collusion events.
