@@ -9,6 +9,7 @@ import {
   TransactionInstruction,
   Context,
   SignatureResult,
+  SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
 } from "@solana/web3.js";
 import {
   initAccount,
@@ -138,6 +139,7 @@ async function requestRandomness(connection: Connection, vrfAccount: Account, pa
   let transactionInstruction1 = new TransactionInstruction({
     keys: [
       { pubkey: vrfAccount.publicKey, isSigner: true, isWritable: true },
+      { pubkey: SYSVAR_RECENT_BLOCKHASHES_PUBKEY, isSigner: false, isWritable: false },
     ],
     programId: PID,
     data: Buffer.from(SwitchboardInstruction.encodeDelimited(SwitchboardInstruction.create({
@@ -177,7 +179,6 @@ async function main() {
   let vrfAccount = await createOwnedStateAccount(connection, payerAccount, 500, PID);
   await initAccount(connection, payerAccount, vrfAccount, SwitchboardAccountType.TYPE_VRF);
   await setVrfConfigs(connection, vrfAccount, vrfProducerAccount, fmAccount, payerAccount);
-  await getVrfState(connection, vrfAccount.publicKey);
   await requestRandomness(connection, vrfAccount, payerAccount);
   await awaitRandomness(connection, vrfAccount);
 }
