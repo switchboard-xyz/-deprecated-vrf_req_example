@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@switchboard-xyz/switchboard-api": "^0.2.89"
+  }
+}
