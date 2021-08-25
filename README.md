@@ -32,6 +32,11 @@ If the most recent blockhash were not included in randomness generation and
 the randomness producer secret key leaked publicly, any party could
 predict randomness generation well before requested.
 
+## Consideration 3
+If a randomness request is surfaced to an oracle before finalization on chain,
+a risk of randomness prediction is surfaced. To minimize the window of randomness
+prediction attacks, we can include the most recent blockhash in the randomness seed.
+
 ## Design Decision
 Given the above considerations and given Solanas block generation speed, attack
 scope is more narrowed to include the most recent blockhash to minimize randomness

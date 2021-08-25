@@ -17,7 +17,8 @@ import {
   createOwnedStateAccount,
   SWITCHBOARD_DEVNET_PID,
   SwitchboardInstruction,
-  VrfAccountData
+  VrfAccountData,
+  publishSwitchboardAccount
 } from "@switchboard-xyz/switchboard-api";
 import fs from "fs";
 import resolve from "resolve-dir";
@@ -66,6 +67,40 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function createVrfPermit(
+  connection: Connection,
+  payer: Account,
+  vrfPubKey: PublicKey,
+  granter: Account): Promise<Account> {
+  let permitAccount = new Account();
+  let pid = (await connection.getAccountInfo(vrfPubKey))?.owner;
+  await publishSwitchboardAccount(connection, permitAccount, payer, pid, SwitchboardAccountType.TYPE_VRF_PERMIT, 250);
+
+  let transactionInstruction = new TransactionInstruction({
+    keys: [
+      { pubkey: permitAccount.publicKey, isSigner: true, isWritable: true },
+      { pubkey: granter.publicKey, isSigner: true, isWritable: false },
+      { pubkey: vrfPubKey, isSigner: true, isWritable: false },
+    ],
+    programId: PID,
+    data: Buffer.from(SwitchboardInstruction.encodeDelimited(SwitchboardInstruction.create({
+      setVrfPermitInstruction: SwitchboardInstruction.SetVrfPermitInstruction.create({
+        enabled: true
+      })
+    })).finish())
+  });
+
+  let signature = await sendAndConfirmTransaction(
+    connection, new Transaction()
+    .add(transactionInstruction),
+  [
+    payer,
+    permitAccount,
+    granter
+  ]);
+  return permitAccount;
+}
+
 async function getVrfState(connection: Connection, vrfPubKey: PublicKey): Promise<VrfAccountData> {
   let accountInfo = await connection.getAccountInfo(vrfPubKey);
   let state = VrfAccountData.decodeDelimited(accountInfo.data.slice(1));
@@ -84,31 +119,7 @@ async function setVrfConfigs(connection: Connection,
                              fmAccount: Account,
                              payerAccount: Account) {
 
-  let transactionInstruction1 = new TransactionInstruction({
-    keys: [
-      { pubkey: vrfAccount.publicKey, isSigner: true, isWritable: true },
-      { pubkey: producerAccount.publicKey, isSigner: true, isWritable: false },
-    ],
-    programId: PID,
-    data: Buffer.from(SwitchboardInstruction.encodeDelimited(SwitchboardInstruction.create({
-      setVrfConfigsInstruction: SwitchboardInstruction.SetVrfConfigsInstruction.create({
-        randomnessProducerPubkey: producerAccount.publicKey.toBytes()
-      })
-    })).finish())
-  });
-  let transactionInstruction2 = new TransactionInstruction({
-    keys: [
-      { pubkey: vrfAccount.publicKey, isSigner: true, isWritable: true },
-      { pubkey: fmAccount.publicKey, isSigner: true, isWritable: false },
-    ],
-    programId: PID,
-    data: Buffer.from(SwitchboardInstruction.encodeDelimited(SwitchboardInstruction.create({
-      setVrfConfigsInstruction: SwitchboardInstruction.SetVrfConfigsInstruction.create({
-        fmPubkey: fmAccount.publicKey.toBytes()
-      })
-    })).finish())
-  });
-  let transactionInstruction3 = new TransactionInstruction({
+  let transactionInstruction = new TransactionInstruction({
     keys: [
       { pubkey: vrfAccount.publicKey, isSigner: true, isWritable: true },
     ],
@@ -124,9 +135,7 @@ async function setVrfConfigs(connection: Connection,
   console.log("Awaiting transaction confirmation...");
   let signature = await sendAndConfirmTransaction(
     connection, new Transaction()
-    .add(transactionInstruction1)
-    .add(transactionInstruction2)
-    .add(transactionInstruction3),
+    .add(transactionInstruction),
   [
     payerAccount,
     vrfAccount,
@@ -178,6 +187,8 @@ async function main() {
   let payerAccount = new Account(payerKeypair);
   let vrfAccount = await createOwnedStateAccount(connection, payerAccount, 500, PID);
   await initAccount(connection, payerAccount, vrfAccount, SwitchboardAccountType.TYPE_VRF);
+  let vrfProducerPermit = await createVrfPermit(connection, payerAccount, vrfAccount.publicKey, vrfProducerAccount);
+  let fmPermit = await createVrfPermit(connection, payerAccount, vrfAccount.publicKey, fmAccount);
   await setVrfConfigs(connection, vrfAccount, vrfProducerAccount, fmAccount, payerAccount);
   await requestRandomness(connection, vrfAccount, payerAccount);
   await awaitRandomness(connection, vrfAccount);
