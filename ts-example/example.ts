@@ -18,7 +18,10 @@ import {
   SWITCHBOARD_DEVNET_PID,
   SwitchboardInstruction,
   VrfAccountData,
-  publishSwitchboardAccount
+  publishSwitchboardAccount,
+  createVrfAccount,
+  parseVrfAccountData,
+  requestRandomness,
 } from "@switchboard-xyz/switchboard-api";
 import fs from "fs";
 import resolve from "resolve-dir";
@@ -101,66 +104,10 @@ async function createVrfPermit(
   return permitAccount;
 }
 
-async function getVrfState(connection: Connection, vrfPubKey: PublicKey): Promise<VrfAccountData> {
-  let accountInfo = await connection.getAccountInfo(vrfPubKey);
-  let state = VrfAccountData.decodeDelimited(accountInfo.data.slice(1));
-  return state;
-}
-
-async function setVrfConfigs(connection: Connection, 
-                             vrfAccount: Account,
-                             producerAccount: Account,
-                             fmAccount: Account,
-                             payerAccount: Account) {
-
-  let transactionInstruction = new TransactionInstruction({
-    keys: [
-      { pubkey: vrfAccount.publicKey, isSigner: true, isWritable: true },
-    ],
-    programId: PID,
-    data: Buffer.from(SwitchboardInstruction.encodeDelimited(SwitchboardInstruction.create({
-      setVrfConfigsInstruction: SwitchboardInstruction.SetVrfConfigsInstruction.create({
-        minProofConfirmations: 5,
-        lockConfigs: true
-      })
-    })).finish())
-  });
-
-  let signature = await sendAndConfirmTransaction(
-    connection, new Transaction()
-    .add(transactionInstruction),
-  [
-    payerAccount,
-    vrfAccount,
-  ]);
-}
-
-async function requestRandomness(connection: Connection, vrfAccount: Account, payerAccount: Account, vrfProducerPubkey: PublicKey, fmPubkey: PublicKey) {
-  let transactionInstruction1 = new TransactionInstruction({
-    keys: [
-      { pubkey: vrfAccount.publicKey, isSigner: true, isWritable: true },
-      { pubkey: SYSVAR_RECENT_BLOCKHASHES_PUBKEY, isSigner: false, isWritable: false },
-      { pubkey: vrfProducerPubkey, isSigner: false, isWritable: false },
-      { pubkey: fmPubkey, isSigner: false, isWritable: false },
-    ],
-    programId: PID,
-    data: Buffer.from(SwitchboardInstruction.encodeDelimited(SwitchboardInstruction.create({
-      requestRandomnessInstruction: SwitchboardInstruction.RequestRandomnessInstruction.create({})
-    })).finish())
-  });
-  let signature = await sendAndConfirmTransaction(
-    connection, new Transaction()
-    .add(transactionInstruction1),
-    [
-      payerAccount,
-      vrfAccount,
-    ]);
-}
-
 async function awaitRandomness(connection: Connection, vrfAccount: Account) {
   let attempts = 30;
   while (attempts--) {
-    let state: VrfAccountData = await getVrfState(connection, vrfAccount.publicKey);
+    let state = await parseVrfAccountData(connection, vrfAccount.publicKey);
     if (state.numProofConfirmations >= state.minProofConfirmations) {
       break;
     }
@@ -179,18 +126,15 @@ async function main() {
   let vrfProducerAccount = new Account(vrfProducerKeypair);
   let payerAccount = new Account(payerKeypair);
   console.log("Creating vrf account");
-  let vrfAccount = await createOwnedStateAccount(connection, payerAccount, 500, PID);
-  await initAccount(connection, payerAccount, vrfAccount, SwitchboardAccountType.TYPE_VRF);
+  let vrfAccount = await createVrfAccount(connection, payerAccount, PID);
   console.log("Creating vrf permits");
   let vrfProducerPermit = await createVrfPermit(connection, payerAccount, vrfAccount.publicKey, vrfProducerAccount);
   let fmPermit = await createVrfPermit(connection, payerAccount, vrfAccount.publicKey, fmAccount);
-  console.log("Setting vrf configs");
-  await setVrfConfigs(connection, vrfAccount, vrfProducerAccount, fmAccount, payerAccount);
   console.log("Requesting randomness");
-  await requestRandomness(connection, vrfAccount, payerAccount, vrfProducerPermit.publicKey, fmPermit.publicKey);
+  await requestRandomness(connection, payerAccount, vrfAccount, vrfProducerPermit.publicKey, fmPermit.publicKey);
   console.log("Awaiting randomness...");
   await awaitRandomness(connection, vrfAccount);
-  let state = await getVrfState(connection, vrfAccount.publicKey);
+  let state = await parseVrfAccountData(connection, vrfAccount.publicKey);
   console.log(
     "VRF account state:\n",
     JSON.stringify(state.toJSON(), null, 2)
