@@ -44,13 +44,22 @@ randomness foresight on producer secret key leaks.
 
 
 # Usage
-The included example shows how to create a VRF account and link it to a provided
+## Using your own VRF oracle
+The example shows how to create a VRF account and link it to a provided
 randomness producer and fulfillment group (which will act to verify VRF proofs)
 `ts-node example.ts --payerFile=example-keypair.json --vrfProducerFile=vrf_producer_secret.json --fmFile=fm_secret.json`
 
+## Using Switchboard Oracles
 For usage of a VRF on Solana with Switchboard's oracle network, please email
 randomness@switchboard.xyz with your organization's name and the public
-key of the VRF account you generated. 
+key of the VRF account you generated.
+We will then provide you with permits to use our oracles for randomness.
+Generate a VRF account by using: https://switchboard-xyz.github.io/switchboard-api/modules.html#createvrfaccount
+Request a new randomness value using: https://switchboard-xyz.github.io/switchboard-api/modules.html#requestrandomness
+
+## Calling on-chain
+Documentation on VRF randomness retrieval on-chain can be found at:
+https://docs.rs/switchboard-program/0.1.52/switchboard_program/struct.VrfAccount.html
 
 
 # Additional Considerations and Improvements
