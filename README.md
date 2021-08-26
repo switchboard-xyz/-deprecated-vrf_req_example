@@ -55,7 +55,8 @@ randomness@switchboard.xyz with your organization's name and the public
 key of the VRF account you generated.<br>
 We will then provide you with permits to use our oracles for randomness.<br>
 Generate a VRF account by using [this method](https://switchboard-xyz.github.io/switchboard-api/modules.html#createvrfaccount)<br>
-Request a new randomness value using [this method](https://switchboard-xyz.github.io/switchboard-api/modules.html#requestrandomness)
+Request a new randomness value using [this method](https://switchboard-xyz.github.io/switchboard-api/modules.html#requestrandomness)<br>
+Randomness per VRF account can be requested once every 10 seconds.
 
 ## Calling on-chain
 Documentation on VRF randomness retrieval on-chain can be found at:
