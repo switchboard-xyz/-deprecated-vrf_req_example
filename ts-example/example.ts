@@ -104,12 +104,6 @@ async function createVrfPermit(
 async function getVrfState(connection: Connection, vrfPubKey: PublicKey): Promise<VrfAccountData> {
   let accountInfo = await connection.getAccountInfo(vrfPubKey);
   let state = VrfAccountData.decodeDelimited(accountInfo.data.slice(1));
-  console.log(
-    "(",
-    vrfPubKey.toBase58(),
-    ") state.\n",
-    JSON.stringify(state.toJSON(), null, 2)
-  );
   return state;
 }
 
@@ -139,8 +133,6 @@ async function setVrfConfigs(connection: Connection,
   [
     payerAccount,
     vrfAccount,
-    // producerAccount,
-    // fmAccount,
   ]);
 }
 
@@ -197,7 +189,15 @@ async function main() {
   await setVrfConfigs(connection, vrfAccount, vrfProducerAccount, fmAccount, payerAccount);
   console.log("Requesting randomness");
   await requestRandomness(connection, vrfAccount, payerAccount, vrfProducerPermit.publicKey, fmPermit.publicKey);
+  console.log("Awaiting randomness...");
   await awaitRandomness(connection, vrfAccount);
+  let state = await getVrfState(connection, vrfAccount.publicKey);
+  console.log(
+    "(",
+    vrfAccount.publicKey.toBase58(),
+    ") state.\n",
+    JSON.stringify(state.toJSON(), null, 2)
+  );
 }
 
 main().then(
