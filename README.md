@@ -49,7 +49,7 @@ randomness producer and fulfillment group (which will act to verify VRF proofs)
 `ts-node example.ts --payerFile=example-keypair.json --vrfProducerFile=vrf_producer_secret.json --fmFile=fm_secret.json`
 
 For usage of a VRF on Solana with Switchboard's oracle network, please email
-mailto:randomness@switchboard.xyz with your organization's name and the public
+randomness@switchboard.xyz with your organization's name and the public
 key of the VRF account you generated. 
 
 
