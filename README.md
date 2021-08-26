@@ -52,9 +52,9 @@ randomness producer and fulfillment group (which will act to verify VRF proofs)
 ## Using Switchboard Oracles
 For usage of a VRF on Solana with Switchboard's oracle network, please email
 randomness@switchboard.xyz with your organization's name and the public
-key of the VRF account you generated.
-We will then provide you with permits to use our oracles for randomness.
-Generate a VRF account by using: https://switchboard-xyz.github.io/switchboard-api/modules.html#createvrfaccount
+key of the VRF account you generated.<br>
+We will then provide you with permits to use our oracles for randomness.<br>
+Generate a VRF account by using: https://switchboard-xyz.github.io/switchboard-api/modules.html#createvrfaccount<br>
 Request a new randomness value using: https://switchboard-xyz.github.io/switchboard-api/modules.html#requestrandomness
 
 ## Calling on-chain
