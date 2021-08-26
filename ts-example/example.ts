@@ -126,7 +126,6 @@ async function setVrfConfigs(connection: Connection,
     })).finish())
   });
 
-  console.log("Awaiting transaction confirmation...");
   let signature = await sendAndConfirmTransaction(
     connection, new Transaction()
     .add(transactionInstruction),
@@ -193,9 +192,7 @@ async function main() {
   await awaitRandomness(connection, vrfAccount);
   let state = await getVrfState(connection, vrfAccount.publicKey);
   console.log(
-    "(",
-    vrfAccount.publicKey.toBase58(),
-    ") state.\n",
+    "VRF account state:\n",
     JSON.stringify(state.toJSON(), null, 2)
   );
 }

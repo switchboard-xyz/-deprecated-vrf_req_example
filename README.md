@@ -39,8 +39,8 @@ prediction attacks, we can include the most recent blockhash in the randomness s
 
 ## Design Decision
 Given the above considerations and given Solanas block generation speed, attack
-scope is more narrowed to include the most recent blockhash to minimize randomness
-foresight on producer secret key leaks.
+scope is more narrowed when including the most recent blockhash to minimize
+randomness foresight on producer secret key leaks.
 
 
 # Usage
@@ -48,13 +48,17 @@ The included example shows how to create a VRF account and link it to a provided
 randomness producer and fulfillment group (which will act to verify VRF proofs)
 `ts-node example.ts --payerFile=example-keypair.json --vrfProducerFile=vrf_producer_secret.json --fmFile=fm_secret.json`
 
+For usage of a VRF on Solana with Switchboard's oracle network, please email
+mailto:randomness@switchboard.xyz with your organization's name and the public
+key of the VRF account you generated. 
+
 
 # Additional Considerations and Improvements
 Currently, a group of oracles come to consensus on whether a randomness generation
 successfully verifies with the published proof.  This is due to the limitation
 that trusted elliptic curve libraries are not formally compatible with Solana's
 toolchain.  We are in the process of moving proof verification on chain rather
-than differing to oracles to verify proofs.
+than deferring to oracles to verify proofs.
 
 This also brings the additional security consideration that randomness proofs
 may be falsely verified on malicious oracle collusion events.
