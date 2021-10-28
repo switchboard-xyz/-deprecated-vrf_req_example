@@ -33,10 +33,11 @@ const bs58 = require("bs58");
 const PID = SWITCHBOARD_DEVNET_PID;
 
 let argv = yargs(process.argv).options({
-  dataFeedPubkey: {
+  vrfPubkey: {
     type: "string",
-    describe: "Public key of the data feed to use.",
+    describe: "Public key of a pre-existing VRF account.",
     demand: false,
+    default: null,
   },
   payerFile: {
     type: "string",
@@ -141,19 +142,27 @@ async function main() {
   let payerAccount = new Account(payerKeypair);
   console.log("Creating vrf account");
   let vrfAccount = await createVrfAccount(connection, payerAccount, PID);
+  let vrfPubkey = vrfAccount.publicKey;
+  if (argv.vrfPubkey !== null) {
+    vrfPubkey = new PublicKey(argv.vrfPubkey);
+  }
   console.log("Creating vrf permits");
   let vrfProducerPermit = await createVrfPermit(
     connection,
     payerAccount,
-    vrfAccount.publicKey,
+    vrfPubkey,
     vrfProducerAccount
   );
   let fmPermit = await createVrfPermit(
     connection,
     payerAccount,
-    vrfAccount.publicKey,
+    vrfPubkey,
     fmAccount
   );
+  console.log("Setup done");
+  if (argv.vrfPubkey !== null) {
+    return;
+  }
   console.log("Requesting randomness");
   await requestRandomness(
     connection,
