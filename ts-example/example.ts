@@ -28,28 +28,28 @@ import resolve from "resolve-dir";
 import yargs from "yargs/yargs";
 import { EventEmitter } from "events";
 import { waitFor } from "wait-for-event";
-const bs58 = require('bs58');
+const bs58 = require("bs58");
 
 const PID = SWITCHBOARD_DEVNET_PID;
 
 let argv = yargs(process.argv).options({
-  'dataFeedPubkey': {
-    type: 'string',
+  dataFeedPubkey: {
+    type: "string",
     describe: "Public key of the data feed to use.",
     demand: false,
   },
-  'payerFile': {
-    type: 'string',
+  payerFile: {
+    type: "string",
     describe: "Keypair file to pay for transactions.",
     demand: true,
   },
-  'vrfProducerFile': {
-    type: 'string',
+  vrfProducerFile: {
+    type: "string",
     describe: "Keypair file for vrf producer.",
     demand: false,
   },
-  'fmFile': {
-    type: 'string',
+  fmFile: {
+    type: "string",
     describe: "Keypair file for vrf proof confirmations.",
     demand: false,
   },
@@ -74,10 +74,18 @@ async function createVrfPermit(
   connection: Connection,
   payer: Account,
   vrfPubKey: PublicKey,
-  granter: Account): Promise<Account> {
+  granter: Account
+): Promise<Account> {
   let permitAccount = new Account();
   let pid = (await connection.getAccountInfo(vrfPubKey))?.owner;
-  await publishSwitchboardAccount(connection, permitAccount, payer, pid, SwitchboardAccountType.TYPE_VRF_PERMIT, 250);
+  await publishSwitchboardAccount(
+    connection,
+    permitAccount,
+    payer,
+    pid,
+    SwitchboardAccountType.TYPE_VRF_PERMIT,
+    250
+  );
 
   let transactionInstruction = new TransactionInstruction({
     keys: [
@@ -86,21 +94,23 @@ async function createVrfPermit(
       { pubkey: vrfPubKey, isSigner: false, isWritable: false },
     ],
     programId: PID,
-    data: Buffer.from(SwitchboardInstruction.encodeDelimited(SwitchboardInstruction.create({
-      setVrfPermitInstruction: SwitchboardInstruction.SetVrfPermitInstruction.create({
-        enabled: true
-      })
-    })).finish())
+    data: Buffer.from(
+      SwitchboardInstruction.encodeDelimited(
+        SwitchboardInstruction.create({
+          setVrfPermitInstruction:
+            SwitchboardInstruction.SetVrfPermitInstruction.create({
+              enabled: true,
+            }),
+        })
+      ).finish()
+    ),
   });
 
   let signature = await sendAndConfirmTransaction(
-    connection, new Transaction()
-    .add(transactionInstruction),
-  [
-    payer,
-    permitAccount,
-    granter
-  ]);
+    connection,
+    new Transaction().add(transactionInstruction),
+    [payer, permitAccount, granter]
+  );
   return permitAccount;
 }
 
@@ -116,36 +126,53 @@ async function awaitRandomness(connection: Connection, vrfAccount: Account) {
 }
 
 async function main() {
-  let cluster = 'devnet';
-  let url = "https://stage.devnet.rpcpool.com"; //clusterApiUrl(toCluster(cluster), true);
-  let connection = new Connection(url, 'processed');
-  let payerKeypair = JSON.parse(fs.readFileSync(resolve(argv.payerFile), 'utf-8'));
-  let fmKeypair = JSON.parse(fs.readFileSync(resolve(argv.fmFile), 'utf-8'));
+  let cluster = "devnet";
+  let url = clusterApiUrl(toCluster(cluster), true);
+  let connection = new Connection(url, "processed");
+  let payerKeypair = JSON.parse(
+    fs.readFileSync(resolve(argv.payerFile), "utf-8")
+  );
+  let fmKeypair = JSON.parse(fs.readFileSync(resolve(argv.fmFile), "utf-8"));
   let fmAccount = new Account(fmKeypair);
-  let vrfProducerKeypair = JSON.parse(fs.readFileSync(resolve(argv.vrfProducerFile), 'utf-8'));
+  let vrfProducerKeypair = JSON.parse(
+    fs.readFileSync(resolve(argv.vrfProducerFile), "utf-8")
+  );
   let vrfProducerAccount = new Account(vrfProducerKeypair);
   let payerAccount = new Account(payerKeypair);
   console.log("Creating vrf account");
   let vrfAccount = await createVrfAccount(connection, payerAccount, PID);
   console.log("Creating vrf permits");
-  let vrfProducerPermit = await createVrfPermit(connection, payerAccount, vrfAccount.publicKey, vrfProducerAccount);
-  let fmPermit = await createVrfPermit(connection, payerAccount, vrfAccount.publicKey, fmAccount);
+  let vrfProducerPermit = await createVrfPermit(
+    connection,
+    payerAccount,
+    vrfAccount.publicKey,
+    vrfProducerAccount
+  );
+  let fmPermit = await createVrfPermit(
+    connection,
+    payerAccount,
+    vrfAccount.publicKey,
+    fmAccount
+  );
   console.log("Requesting randomness");
-  await requestRandomness(connection, payerAccount, vrfAccount, vrfProducerPermit.publicKey, fmPermit.publicKey);
+  await requestRandomness(
+    connection,
+    payerAccount,
+    vrfAccount,
+    vrfProducerPermit.publicKey,
+    fmPermit.publicKey
+  );
   console.log("Awaiting randomness...");
   await awaitRandomness(connection, vrfAccount);
   let state = await parseVrfAccountData(connection, vrfAccount.publicKey);
-  console.log(
-    "VRF account state:\n",
-    JSON.stringify(state.toJSON(), null, 2)
-  );
+  console.log("VRF account state:\n", JSON.stringify(state.toJSON(), null, 2));
 }
 
 main().then(
   () => process.exit(),
-  err => {
+  (err) => {
     console.error("Failed to complete action.");
     console.error(err);
     process.exit(-1);
-  },
+  }
 );
