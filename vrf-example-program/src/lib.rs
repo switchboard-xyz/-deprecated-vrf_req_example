@@ -20,9 +20,8 @@ fn process_instruction<'a>(
     let accounts_iter = &mut accounts.iter();
     let vrf_account = next_account_info(accounts_iter)?;
 
-    let vrf = VrfAccount::new(vrf_account)?;
-    let random = vrf.get_verified_randomness()?;
-    let value: &[u64] = bytemuck::cast_slice(&random[..]);
+    let vrf = VrfAccount::new(vrf_account)?.get_verified_randomness()?;
+    let value: &[u64] = bytemuck::cast_slice(&vrf[..]);
     let result = value[0] % MAX_VALUE;
 
     msg!("Current VRF Value [0 - {}) = {}!", MAX_VALUE, result);

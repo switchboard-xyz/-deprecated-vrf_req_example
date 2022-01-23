@@ -16,14 +16,6 @@ npm run build
 npm link
 ```
 
-## Build Onchain Program
-
-Build an onchain program to read a VRF account and return a final result between 0 - 8192
-
-```bash
-npm run deploy:onchain
-```
-
 ## Walk-Through
 
 To request randomness on-chain, we need create the following Switchboard V1 accounts:
@@ -36,7 +28,7 @@ To request randomness on-chain, we need create the following Switchboard V1 acco
 | VRF Ffm Permit                    | vrfPermitAccount.json      | Permit our VRF account to use a fulfillment manager                                                  |
 | VRF Producer Permit               | producerPermitAccount.json | Create a permit between our oracle and our VRF account to allow the oracle to fulfill update request |
 
-**NOTE:** We are using the oracle's keypair as the VRF Producer
+**NOTE:** We are using the oracle's keypair as the VRF Producer. You will need to use the same payerKeypair for the producerPermitAccount as you used for oracleAuthAccount.
 
 ### Create a Fulfillment Manager Account
 
@@ -106,50 +98,22 @@ sb-vrf request-vrf \
     --producerPermitFile producerPermitAccount.json
 ```
 
-### Read a VRF Account
+### Print a VRF Account
 
 ```bash
-sb-vrf read-vrf \
+sb-vrf print-vrf \
     --vrfFile vrfAccount.json
 ```
 
-### Speed Run
+### Read the VRF Value Onchain
+
+First build the onchain example. You will need to have the Solana toolchain installed and configured for devnet.
 
 ```bash
-sb-vrf create-ffm \
-    --payerFile ../payer-keypair.json
-sb-vrf create-oracle \
-    --payerFile ../payer-keypair.json \
-    --ffmFile ffmAccount.json
-sb-vrf create-vrf \
-    --payerFile ../payer-keypair.json
-sb-vrf permit-vrf \
-    --payerFile ../payer-keypair.json \
-    --ffmFile ffmAccount.json \
-    --vrfFile vrfAccount.json
-sb-vrf permit-vrf-producer \
-    --payerFile ../payer-keypair.json \
-    --vrfFile vrfAccount.json
+npm run deploy:onchain
 ```
 
-Open a new terminal and run `docker-compose up` to start the oracle. Then request a new randomness value
-
-```bash
-sb-vrf request-vrf \
-    --payerFile ../payer-keypair.json \
-    --vrfFile vrfAccount.json \
-    --vrfPermitFile vrfPermitAccount.json \
-    --producerPermitFile producerPermitAccount.json
-```
-
-Then read the value
-
-```bash
-sb-vrf read-vrf \
-    --vrfFile vrfAccount.json
-```
-
-### Read Result Onchain
+Then invoke the program and pass our VrfAccount to read the result and return a value between [0 - 25000).
 
 ```bash
 sb-vrf read-onchain \
