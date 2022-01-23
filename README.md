@@ -41,7 +41,7 @@ sb-vrf create-ffm \
 
 ### Create a Fulfillment Manager Oracle
 
-Create a new fulfillment manager oracle, authorizand it to heartbeat, and output the keypair to `ffmAuthAccount.json`.
+Create a new fulfillment manager oracle, authorizand it to heartbeat, and output the keypair to `oracleAuthAccount.json`.
 This command will also auto-populate the `docker-compose.yml` file with the expected variables.
 
 ```bash
@@ -67,7 +67,7 @@ sb-vrf create-vrf \
 
 ### Permit VRF Account to use Fulfillment Manager
 
-Create a new permit account, which authorizes a VRF account to use a fulfillment manager, and output the keypair to `ffmPermitAccount.json`.
+Create a new permit account, which authorizes a VRF account to use a fulfillment manager, and output the keypair to `vrfPermitAccount.json`.
 
 ```bash
 sb-vrf permit-vrf \
@@ -78,7 +78,7 @@ sb-vrf permit-vrf \
 
 ### Permit Oracle to Fulfill VRF Update Request
 
-Create a new permit account, which authorizes our oracle to fulfill VRF update request , and output the keypair to `oraclePermitAccount.json`.
+Create a new permit account, which authorizes our oracle to fulfill VRF update request , and output the keypair to `producerPermitAccount.json`.
 
 ```bash
 sb-vrf permit-vrf-producer \
