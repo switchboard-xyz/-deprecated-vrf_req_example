@@ -1,5 +1,45 @@
 {
+  "name": "@switchboard-xyz/vrf-example-v1",
+  "version": "1.0.0",
+  "description": "Sample cli for using Switchboard V1 VRF",
+  "license": "MIT",
+  "private": true,
+  "bin": {
+    "sb-vrf": "./bin/main.js"
+  },
+  "engines": {
+    "node": ">=12"
+  },
+  "scripts": {
+    "start": "ts-node ts/main.ts",
+    "build:cli": "tsc -b",
+    "build:onchain": "cargo build-bpf --manifest-path=./vrf-example-program/Cargo.toml",
+    "deploy:onchain": "cargo build-bpf --manifest-path=./vrf-example-program/Cargo.toml && solana program deploy vrf-example-program/target/deploy/switchboard_v1_vrf_example.so --program-id vrf-example-program/target/deploy/switchboard_v1_vrf_example-keypair.json"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.10",
+    "@types/yargs": "^17.0.8",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-airbnb-typescript": "^14.0.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.24.2",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-unicorn": "^37.0.1",
+    "prettier": "^2.4.1",
+    "prettier-plugin-organize-imports": "^2.3.4",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.5"
+  },
   "dependencies": {
-    "@switchboard-xyz/switchboard-api": "^0.2.134"
+    "@solana/web3.js": "^1.32.0",
+    "@switchboard-xyz/switchboard-api": "^0.2.164",
+    "big.js": "^6.1.1",
+    "chalk": "^4.1.2",
+    "dotenv": "^14.2.0",
+    "npm-run-all": "^4.1.5",
+    "yargs": "^17.3.1"
   }
 }

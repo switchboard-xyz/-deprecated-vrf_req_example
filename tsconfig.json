@@ -2,17 +2,35 @@
   "ts-node": {
     "compilerOptions": {
       "module": "commonjs",
-      "target": "ES2017"
+      "target": "ES2021",
+      "strict": true,
+      "noImplicitAny": false,
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "resolveJsonModule": true,
+      "allowSyntheticDefaultImports": true
     }
   },
   "compilerOptions": {
     "declaration": true,
     "moduleResolution": "node",
     "module": "commonjs",
-    "target": "es2017",
+    "target": "ES2021",
     "esModuleInterop": true,
-    "allowJs": true,
+    "allowJs": false,
     "checkJs": false,
+    "sourceMap": true,
+    "outDir": "bin",
+    "strict": true,
+    "noEmitOnError": true,
+    "isolatedModules": true,
+    "noImplicitAny": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true
   },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules/**/", "bin"]
 }
-

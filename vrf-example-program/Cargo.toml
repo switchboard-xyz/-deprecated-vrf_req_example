@@ -1,0 +1,16 @@
+[package]
+name = "switchboard-v1-vrf-example"
+version = "0.1.0"
+edition = "2018"
+
+[features]
+no-entrypoint = []
+
+[dependencies]
+solana-program = "1.9.0"
+switchboard-program = "0.2.0"
+switchboard-protos = "0.1.59"
+bytemuck = "1.7.3"
+
+[lib]
+crate-type = ["cdylib", "lib"]
