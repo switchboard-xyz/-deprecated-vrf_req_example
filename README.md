@@ -1,3 +1,7 @@
+# DEPRECATED
+This repo is now deprecated in favor of our V2 VRF: see https://github.com/switchboard-xyz/vrf-cpi-example
+
+
 Repo to demo verifiable randomness generation on Solana.
 
 # Prerequisites
